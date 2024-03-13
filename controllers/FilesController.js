@@ -106,6 +106,59 @@ class FilesController {
       });
     });
   }
+
+  static async getShow(req, res) {
+    const user = await FilesController.validateUser(req);
+    if (!user) {
+      res.status(401).send({ error: 'Unauthorized' });
+      return;
+    }
+
+    const fileId = req.params.id;
+    const file = await dbClient.dbClient.collection('files').findOne({
+      _id: ObjectId(fileId), userId: user.__id,
+    });
+
+    if (!file) {
+      res.status(404).send({ error: 'Not found' });
+      return;
+    }
+    res.status(200).send(file);
+  }
+
+  static async getIndex(req, res) {
+    const user = await FilesController.validateUser(req);
+    const pageSize = 20;
+    if (!user) {
+      res.status(401).send({ error: 'Unauthorized' });
+      return;
+    }
+    const parentId = req.query.parentId ? ObjectId(req.query.parentId) : '0';
+    const { page } = req.query;
+    const userId = user._id.toString();
+    const files = dbClient.dbClient.collection('files');
+    const filesCount = await files.countDocuments({ userId, parentId });
+
+    if (filesCount === '0') {
+      res.status(200).send([]);
+      return;
+    }
+    const pageNumber = page || 1;
+    const skip = (pageNumber - 1) * pageSize;
+    const result = await files.aggregate([
+      { $match: { userId, parentId } },
+      { $skip: skip },
+      { $limit: pageSize },
+    ]).toArray();
+
+    const modifiedResult = result.map((file) => ({
+      ...file,
+      id: file._id,
+      _id: undefined,
+    }));
+
+    res.status(200).send(modifiedResult);
+  }
 }
 
 export default FilesController;
