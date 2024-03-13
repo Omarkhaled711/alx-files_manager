@@ -235,7 +235,7 @@ class FilesController {
       return;
     }
 
-    if (userId && userId !== file.userId.toString()) {
+    if (userId !== file.userId.toString()) {
       res.status(404).send({ error: 'Not found' });
       return;
     }
@@ -250,7 +250,7 @@ class FilesController {
       localPath = `${localPath}_${size}`;
     }
 
-    if (!(await FilesController.pathChecking(localPath))) {
+    if (!fs.existsSync(localPath)) {
       res.status(404).send({ error: 'Not found' });
       return;
     }
