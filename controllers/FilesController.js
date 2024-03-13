@@ -78,7 +78,7 @@ class FilesController {
   static async saveFile(res, localPath, data, fileData) {
     await fs.promises.writeFile(localPath, data, 'utf-8');
 
-    const result = await dbClient.db.collection('files').insertOne(fileData);
+    const result = await dbClient.dbClient.collection('files').insertOne(fileData);
     const writeData = { ...fileData, id: result.insertedId };
     delete writeData._id;
     delete writeData.localPath;
